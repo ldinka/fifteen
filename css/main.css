@@ -7,11 +7,26 @@
 body {
     margin: 50px;
 }
+button {
+    border: 1px outset;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px;
+    padding: 5px 15px;
+}
+
+#find_solution {
+    background: #3F7400;
+    color: #fff;
+}
+#find_solution:hover {
+    background: #62912B;
+}
 #game_area {
     background: #F8F8F8;
     border: 2px inset #CCC;
     height: 324px;
-    margin: 50px auto 0;
+    margin: 50px auto 30px;
     position: relative;
     width: 324px;
 }
@@ -30,16 +45,12 @@ body {
 }
 #new_game {
     background: #086893;
-    border: 1px outset;
-    border-radius: 5px;
     color: #fff;
-    cursor: pointer;
-    margin: 30px;
-    padding: 5px 15px;
 }
 #new_game:hover {
     background: #2C86B0;
 }
+
 #position_1 {
     left: 0;
     top: 0;

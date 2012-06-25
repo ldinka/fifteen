@@ -10,6 +10,9 @@ function Init() {
         step_counter = 0;
         document.getElementById("step_counter").innerHTML = step_counter;
     };
+    document.getElementById("find_solution").onclick = function(){
+        findSolution();
+    };
     var array_length = x_size * y_size - 1;
     var right_array = [];
     for (var i = 0; i < array_length; i++) {
@@ -17,11 +20,13 @@ function Init() {
     }
     right_array[array_length] = 0;
     window.right_array  = right_array;
+
     var right_matrix = [];
     for (var y = 0; y < y_size; y++) {
         right_matrix[y] =  right_array.slice(y * x_size, (y + 1) * x_size);
     }
     window.right_matrix = right_matrix;
+
     newGame();
 }
 
@@ -36,9 +41,15 @@ function newGame() {
             tile_matrix[y] =  tile_array.slice(y * x_size, (y + 1) * x_size);
         }
         var tiles = [];
+        var coords_matrix = [];
         for (var y = 0, k = 0; y < y_size; y++) {
             tiles[y] = [];
             for (var x = 0; x < x_size; x++, k++) {
+                if (k + 1 == x_size * y_size) {
+                    coords_matrix[0] = [y, x];
+                } else {
+                    coords_matrix[k + 1] = [y, x];
+                }
                 var value = tile_array[k];
                 var tile = document.getElementById("position_" + (k + 1));
                 tile.x = x;
@@ -47,6 +58,7 @@ function newGame() {
                 if (tile.value == 0) {
                     tile.innerHTML = "";
                     tile.setAttribute("class", "space");
+                    window.space = tile;
                 } else {
                     tile.innerHTML = value;
                     tile.setAttribute("class", "");
@@ -56,6 +68,7 @@ function newGame() {
             }
         }
         window.tiles = tiles;
+        window.coords_matrix = coords_matrix;
     }
 }
 
@@ -86,10 +99,12 @@ function moveTile(tile, space) {
     tile.value = 0;
     tile.innerHTML = "";
     tile.setAttribute("class", "space");
+    window.space = tile;
     space.value = value;
     space.innerHTML = value;
     space.setAttribute("class", "");
     stepCounter();
+    window.last_moved_value = value;
     if (tile_matrix.toString() == window.right_matrix.toString()) {
         alert("Победа!");
     }
@@ -137,7 +152,107 @@ function checkSolution(tile_array) {
     }
 }
 
+function findSolution() {
+    var coords_matrix = window.coords_matrix;
+    var x = window.space.x;
+    var y = window.space.y;
+    var good_list = [];
+    var bad_list = [];
+    if (x > 0) {
+        var tile1 = window.tiles[y][x-1];
+        var t1_old_dis = Math.abs(y - coords_matrix[tile1.value][0]) +
+                         Math.abs(x - coords_matrix[tile1.value][1] - 1);
+        var t1_new_dis = Math.abs(y - coords_matrix[tile1.value][0]) +
+                         Math.abs(x - coords_matrix[tile1.value][1]);
+        if (t1_new_dis <= t1_old_dis) {
+            good_list.push([t1_new_dis, tile1]);
+        } else {
+            bad_list.push([t1_old_dis, tile1]);
+        }
 
+
+
+        console.log(tile1.value + ": " + t1_old_dis + "->" + t1_new_dis);
+    }
+    if (x < x_size - 1) {
+        var tile2 = window.tiles[y][x+1];
+        var t2_old_dis = Math.abs(y - coords_matrix[tile2.value][0]) +
+                         Math.abs(x - coords_matrix[tile2.value][1] + 1);
+        var t2_new_dis = Math.abs(y - coords_matrix[tile2.value][0]) +
+                         Math.abs(x - coords_matrix[tile2.value][1]);
+        if (t2_new_dis <= t2_old_dis) {
+            good_list.push([t2_new_dis, tile2]);
+        } else {
+            bad_list.push([t2_old_dis, tile2]);
+        }
+
+
+        console.log(tile2.value + ": " + t2_old_dis + "->" + t2_new_dis);
+    }
+    if (y > 0) {
+        var tile3 = window.tiles[y-1][x];
+        var t3_old_dis = Math.abs(y - coords_matrix[tile3.value][0] - 1) +
+                         Math.abs(x - coords_matrix[tile3.value][1]);
+        var t3_new_dis = Math.abs(y - coords_matrix[tile3.value][0]) +
+                         Math.abs(x - coords_matrix[tile3.value][1]);
+        if (t3_new_dis <= t3_old_dis) {
+            good_list.push([t3_new_dis, tile3]);
+        } else {
+            bad_list.push([t3_old_dis, tile3]);
+        }
+
+
+        console.log(tile3.value + ": " + t3_old_dis + "->" + t3_new_dis);
+    }
+    if (y < y_size - 1) {
+        var tile4 = window.tiles[y+1][x];
+        var t4_old_dis = Math.abs(y - coords_matrix[tile4.value][0] + 1) +
+                         Math.abs(x - coords_matrix[tile4.value][1]);
+        var t4_new_dis = Math.abs(y - coords_matrix[tile4.value][0]) +
+                         Math.abs(x - coords_matrix[tile4.value][1]);
+        if (t4_new_dis <= t4_old_dis) {
+            good_list.push([t4_new_dis, tile4]);
+        } else {
+            bad_list.push([t4_old_dis, tile4]);
+        }
+
+
+        console.log(tile4.value + ": " + t4_old_dis + "->" + t4_new_dis);
+    }
+
+    var g_length = good_list.length;
+    var the_best;
+    if (g_length > 1 || (g_length == 1 && good_list[0].value != window.last_moved_value)) {
+        the_best = good_list[0];
+        if (g_length > 1) {
+            for (var i = 1; i < g_length; i++) {
+                if (good_list[i][0] > the_best[0]) {
+                    the_best = good_list[i];
+                }
+            }
+        }
+    } else {
+        var b_length = bad_list.length;
+        the_best = bad_list[0];
+        if (b_length > 1) {
+            for (var i = 1; i < b_length; i++) {
+                console.log("bad", the_best[i].value, window.last_moved_value);
+                if (bad_list[i][0] < the_best[0] && the_best[i].value != window.last_moved_value) {
+                    the_best = bad_list[i];
+                }
+            }
+        }
+    }
+
+    console.log(the_best[1].value, window.last_moved_value);
+    if (the_best[1]) {
+        moveTile(the_best[1], window.space);
+    }
+    console.log(the_best);
+
+    console.log(good_list);
+    console.log(bad_list);
+}
 
 
 

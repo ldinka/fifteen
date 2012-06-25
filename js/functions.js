@@ -22,7 +22,6 @@ function Init() {
         right_matrix[y] =  right_array.slice(y * x_size, (y + 1) * x_size);
     }
     window.right_matrix = right_matrix;
-    console.log(right_matrix);
     newGame();
 }
 
@@ -32,35 +31,32 @@ function newGame() {
     shuffle(tile_array);
     if (checkSolution(tile_array) == 0) {
         newGame(); // если нет решения
-    }
-    for (var y = 0; y < y_size; y++) {
-        tile_matrix[y] =  tile_array.slice(y * x_size, (y + 1) * x_size);
-    }
-    console.log(tile_array);
-    //tile_array  = [ 13,10,11,6,  5,7,4,8,  1,12,14,9,  3,15,2,0];
-    //tile_matrix = [[13,10,11,6],[5,7,4,8],[1,12,14,9],[3,15,2,0]];
-    //checkSolution(tile_array);
-    var tiles = [];
-    for (var y = 0, k = 0; y < y_size; y++) {
-        tiles[y] = [];
-        for (var x = 0; x < x_size; x++, k++) {
-            var value = tile_array[k];
-            var tile = document.getElementById("position_" + (k + 1));
-            tile.x = x;
-            tile.y = y;
-            tile.value = value;
-            if (tile.value == 0) {
-                tile.innerHTML = "";
-                tile.setAttribute("class", "space");
-            } else {
-                tile.innerHTML = value;
-                tile.setAttribute("class", "");
-            }
-            tiles[y][x] =  tile;
-            tile.onclick = function(){checkTile(this)};
+    } else {
+        for (var y = 0; y < y_size; y++) {
+            tile_matrix[y] =  tile_array.slice(y * x_size, (y + 1) * x_size);
         }
+        var tiles = [];
+        for (var y = 0, k = 0; y < y_size; y++) {
+            tiles[y] = [];
+            for (var x = 0; x < x_size; x++, k++) {
+                var value = tile_array[k];
+                var tile = document.getElementById("position_" + (k + 1));
+                tile.x = x;
+                tile.y = y;
+                tile.value = value;
+                if (tile.value == 0) {
+                    tile.innerHTML = "";
+                    tile.setAttribute("class", "space");
+                } else {
+                    tile.innerHTML = value;
+                    tile.setAttribute("class", "");
+                }
+                tiles[y][x] =  tile;
+                tile.onclick = function(){checkTile(this)};
+            }
+        }
+        window.tiles = tiles;
     }
-    window.tiles = tiles;
 }
 
 function checkTile(tile) {
@@ -94,8 +90,6 @@ function moveTile(tile, space) {
     space.innerHTML = value;
     space.setAttribute("class", "");
     stepCounter();
-    //console.log(tile_matrix);
-    //console.log(window.right_matrix);
     if (tile_matrix.toString() == window.right_matrix.toString()) {
         alert("Победа!");
     }
@@ -122,22 +116,20 @@ function checkSolution(tile_array) {
     var array_length = tile_array.length;
     var check_sum = 0;
     var space_position;
-    for (var i = 0; i < array_length; ++i) {
+    for (var i = 0; i < array_length; i++) {
         var cur_val = tile_array[i];
         if (cur_val != 0) {
-            for (var j = i + 1; j < array_length; ++j) {
+            for (var j = i + 1; j < array_length; j++) {
                 if (cur_val > tile_array[j] && tile_array[j] != 0) {
-                    ++check_sum;
+                    check_sum++;
                 }
             }
         } else {
             space_position = i;
         }
     }
-    var row_number = Math.floor(1 + space_position / x_size);
+    var row_number = Math.ceil((1 + space_position) / x_size);
     check_sum += row_number;
-    console.log((check_sum - row_number) + " + " + row_number + " = " +  check_sum);
-    return 1;
     if (check_sum % 2 == 0) {
         return 1;
     } else {

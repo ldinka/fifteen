@@ -36,8 +36,10 @@ function newGame() {
     for (var y = 0; y < y_size; y++) {
         tile_matrix[y] =  tile_array.slice(y * x_size, (y + 1) * x_size);
     }
-    //tile_array  = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,0,15];
-    //tile_matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,0,15]];
+    console.log(tile_array);
+    //tile_array  = [ 13,10,11,6,  5,7,4,8,  1,12,14,9,  3,15,2,0];
+    //tile_matrix = [[13,10,11,6],[5,7,4,8],[1,12,14,9],[3,15,2,0]];
+    //checkSolution(tile_array);
     var tiles = [];
     for (var y = 0, k = 0; y < y_size; y++) {
         tiles[y] = [];
@@ -92,8 +94,8 @@ function moveTile(tile, space) {
     space.innerHTML = value;
     space.setAttribute("class", "");
     stepCounter();
-    console.log(tile_matrix);
-    console.log(window.right_matrix);
+    //console.log(tile_matrix);
+    //console.log(window.right_matrix);
     if (tile_matrix.toString() == window.right_matrix.toString()) {
         alert("Победа!");
     }
@@ -120,21 +122,22 @@ function checkSolution(tile_array) {
     var array_length = tile_array.length;
     var check_sum = 0;
     var space_position;
-    for (var i = 0; i < array_length; i++) {
+    for (var i = 0; i < array_length; ++i) {
         var cur_val = tile_array[i];
         if (cur_val != 0) {
-            for (var j = i + 1; j < array_length; j++) {
+            for (var j = i + 1; j < array_length; ++j) {
                 if (cur_val > tile_array[j] && tile_array[j] != 0) {
-                    check_sum++;
+                    ++check_sum;
                 }
             }
         } else {
             space_position = i;
         }
     }
-    var row_number = Math.ceil((space_position + 1) / x_size);
+    var row_number = Math.floor(1 + space_position / x_size);
     check_sum += row_number;
-    alert(check_sum);
+    console.log((check_sum - row_number) + " + " + row_number + " = " +  check_sum);
+    return 1;
     if (check_sum % 2 == 0) {
         return 1;
     } else {

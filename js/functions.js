@@ -3,6 +3,7 @@ var y_size = 4;
 var tile_matrix  = [];
 var step_counter = 0;
 window.onload = Init;
+var counter_steps = 0;
 
 function Init() {
     document.getElementById("new_game").onclick = function(){
@@ -49,6 +50,8 @@ function newGame() {
         for (var y = 0; y < y_size; y++) {
             tile_matrix[y] =  tile_array.slice(y * x_size, (y + 1) * x_size);
         }
+        tile_matrix = [[1, 2, 3, 4], [5, 6, 0, 7], [9, 10, 12, 8], [13, 14, 11, 15]];
+        tile_array  = [ 1, 2, 3, 4,   5, 6, 0, 7,   9, 10, 12, 8,   13, 14, 11, 15];
         var tiles = [];
         var coords_matrix = [];
         for (var y = 0, k = 0; y < y_size; y++) {
@@ -164,144 +167,177 @@ function checkSolution(tile_array) {
 function findSolution() {
     var x_space = window.space.x;
     var y_space = window.space.y;
+    var array_path = getSolution(getHeuristic(tile_matrix), [], cloneMatrix(tile_matrix), y_space, x_space, false);
+    console.log(array_path);
+    /*var x_space = window.space.x;
+    var y_space = window.space.y;
 
     var current_heuristic = getHeuristic(tile_matrix);
+    var best_heuristic = current_heuristic;
+    var best_tile;
 
+    console.log("tile_matrix", tile_matrix);
     console.log("current_heuristic", current_heuristic);
 
     if (x_space > 0) {
-        console.log("tile_matrix", tile_matrix);
         console.log("left", tile_matrix[y_space][x_space-1]);
-        var left_matrix = cloneMatrix(tile_matrix);
-        var temp_value = left_matrix[y_space][x_space-1];
-        left_matrix[y_space][x_space] = temp_value;
-        left_matrix[y_space][x_space-1] = 0;
-        console.log("left_matrix", left_matrix);
-        console.log("tile_matrix", tile_matrix);
-        var left_heuristic = getHeuristic(left_matrix);
+        var new_matrix = cloneMatrix(tile_matrix);
+        new_matrix[y_space][x_space] = tile_matrix[y_space][x_space-1];
+        new_matrix[y_space][x_space-1] = 0;
+        console.log("left_matrix", new_matrix);
+        var left_heuristic = getHeuristic(new_matrix);
         console.log("left_heuristic", left_heuristic);
+        if (left_heuristic <= best_heuristic) {
+            best_heuristic = left_heuristic;
+            best_tile = window.tiles[y_space][x_space-1];
+        }
     }
     if (x_space < x_size-1) {
-        console.log("tile_matrix", tile_matrix);
         console.log("right", tile_matrix[y_space][x_space+1]);
-        var right_matrix = tile_matrix.slice(0);
-        right_matrix[y_space][x_space] = tile_matrix[y_space][x_space+1];
-        right_matrix[y_space][x_space+1] = 0;
-        console.log("right_matrix", right_matrix);
-        var right_heuristic = getHeuristic(right_matrix);
+        var new_matrix = cloneMatrix(tile_matrix);
+        new_matrix[y_space][x_space] = tile_matrix[y_space][x_space+1];
+        new_matrix[y_space][x_space+1] = 0;
+        console.log("right_matrix", new_matrix);
+        var right_heuristic = getHeuristic(new_matrix);
         console.log("right_heuristic", right_heuristic);
+        if (right_heuristic <= best_heuristic) {
+            best_heuristic = right_heuristic;
+            best_tile = window.tiles[y_space][x_space+1];
+        }
     }
     if (y_space > 0) {
         console.log("up", tile_matrix[y_space-1][x_space]);
+        var new_matrix = cloneMatrix(tile_matrix);
+        new_matrix[y_space][x_space] = tile_matrix[y_space-1][x_space];
+        new_matrix[y_space-1][x_space] = 0;
+        console.log("up_matrix", new_matrix);
+        var up_heuristic = getHeuristic(new_matrix);
+        console.log("up_heuristic", up_heuristic);
+        if (up_heuristic <= best_heuristic) {
+            best_heuristic = up_heuristic;
+            best_tile = window.tiles[y_space-1][x_space];
+        }
     }
     if (y_space < y_size-1) {
         console.log("down", tile_matrix[y_space+1][x_space]);
-    }
-
-
-
-
-
-
-
-
-
-    /*var good_list = [];
-    var bad_list = [];
-    if (x > 0) {
-        var tile1 = window.tiles[y][x-1];
-        var t1_old_dis = Math.abs(y - coords_matrix[tile1.value][0]) +
-                         Math.abs(x - coords_matrix[tile1.value][1] - 1);
-        var t1_new_dis = Math.abs(y - coords_matrix[tile1.value][0]) +
-                         Math.abs(x - coords_matrix[tile1.value][1]);
-        if (t1_new_dis <= t1_old_dis) {
-            good_list.push([t1_new_dis, tile1]);
-        } else {
-            bad_list.push([t1_old_dis, tile1]);
+        var new_matrix = cloneMatrix(tile_matrix);
+        new_matrix[y_space][x_space] = tile_matrix[y_space+1][x_space];
+        new_matrix[y_space+1][x_space] = 0;
+        console.log("down_matrix", new_matrix);
+        var down_heuristic = getHeuristic(new_matrix);
+        console.log("down_heuristic", down_heuristic);
+        if (down_heuristic <= best_heuristic) {
+            best_heuristic = down_heuristic;
+            best_tile = window.tiles[y_space+1][x_space];
         }
+    }*/
+}
 
+//var found_solution = false;
 
-
-        console.log(tile1.value + ": " + t1_old_dis + "->" + t1_new_dis);
+function getSolution(limit, array_path, matrix, y_space, x_space) {
+    if (++counter_steps > 50000) {
+        return array_path;
     }
-    if (x < x_size - 1) {
-        var tile2 = window.tiles[y][x+1];
-        var t2_old_dis = Math.abs(y - coords_matrix[tile2.value][0]) +
-                         Math.abs(x - coords_matrix[tile2.value][1] + 1);
-        var t2_new_dis = Math.abs(y - coords_matrix[tile2.value][0]) +
-                         Math.abs(x - coords_matrix[tile2.value][1]);
-        if (t2_new_dis <= t2_old_dis) {
-            good_list.push([t2_new_dis, tile2]);
-        } else {
-            bad_list.push([t2_old_dis, tile2]);
+
+    var steps = array_path.length;
+    if (x_space > 0) {
+        var new_matrix = cloneMatrix(matrix);
+        var new_array_path = array_path.slice(0);
+        new_matrix[y_space][x_space] = matrix[y_space][x_space-1];
+        new_matrix[y_space][x_space-1] = 0;
+        var left_heuristic = getHeuristic(new_matrix);
+        if (left_heuristic == 0) {
+            new_array_path.push(new_matrix[y_space][x_space]);
+            found_solution = true;
+            return new_array_path;
         }
-
-
-        console.log(tile2.value + ": " + t2_old_dis + "->" + t2_new_dis);
-    }
-    if (y > 0) {
-        var tile3 = window.tiles[y-1][x];
-        var t3_old_dis = Math.abs(y - coords_matrix[tile3.value][0] - 1) +
-                         Math.abs(x - coords_matrix[tile3.value][1]);
-        var t3_new_dis = Math.abs(y - coords_matrix[tile3.value][0]) +
-                         Math.abs(x - coords_matrix[tile3.value][1]);
-        if (t3_new_dis <= t3_old_dis) {
-            good_list.push([t3_new_dis, tile3]);
-        } else {
-            bad_list.push([t3_old_dis, tile3]);
-        }
-
-
-        console.log(tile3.value + ": " + t3_old_dis + "->" + t3_new_dis);
-    }
-    if (y < y_size - 1) {
-        var tile4 = window.tiles[y+1][x];
-        var t4_old_dis = Math.abs(y - coords_matrix[tile4.value][0] + 1) +
-                         Math.abs(x - coords_matrix[tile4.value][1]);
-        var t4_new_dis = Math.abs(y - coords_matrix[tile4.value][0]) +
-                         Math.abs(x - coords_matrix[tile4.value][1]);
-        if (t4_new_dis <= t4_old_dis) {
-            good_list.push([t4_new_dis, tile4]);
-        } else {
-            bad_list.push([t4_old_dis, tile4]);
-        }
-
-
-        console.log(tile4.value + ": " + t4_old_dis + "->" + t4_new_dis);
-    }
-
-    var g_length = good_list.length;
-    var the_best;
-    if (g_length > 1 || (g_length == 1 && good_list[0].value != window.last_moved_value)) {
-        the_best = good_list[0];
-        if (g_length > 1) {
-            for (var i = 1; i < g_length; i++) {
-                if (good_list[i][0] > the_best[0]) {
-                    the_best = good_list[i];
-                }
+        left_heuristic += steps;
+        if (left_heuristic <= limit) {
+            new_array_path.push(new_matrix[y_space][x_space]);
+            solution_path = getSolution(limit, new_array_path, new_matrix, y_space, x_space-1);
+            if (solution_path) {
+                console.log(1, solution_path);
+                return solution_path;
             }
         }
+    }
+    if (x_space < x_size-1) {
+        var new_matrix = cloneMatrix(matrix);
+        var new_array_path = array_path.slice(0);
+        new_matrix[y_space][x_space] = matrix[y_space][x_space+1];
+        new_matrix[y_space][x_space+1] = 0;
+        var right_heuristic = getHeuristic(new_matrix);
+        if (right_heuristic == 0) {
+            new_array_path.push(new_matrix[y_space][x_space]);
+            found_solution = true;
+            return new_array_path;
+        }
+        right_heuristic += steps;
+        if (right_heuristic <= limit) {
+            new_array_path.push(new_matrix[y_space][x_space]);
+            solution_path = getSolution(limit, new_array_path, new_matrix, y_space, x_space+1);
+            if (solution_path) {
+                console.log(2, solution_path);
+                return solution_path;
+            }
+        }
+    }
+    if (y_space > 0) {
+        var new_matrix = cloneMatrix(matrix);
+        var new_array_path = array_path.slice(0);
+        new_matrix[y_space][x_space] = matrix[y_space-1][x_space];
+        new_matrix[y_space-1][x_space] = 0;
+        var up_heuristic = getHeuristic(new_matrix);
+        if (up_heuristic == 0) {
+            new_array_path.push(new_matrix[y_space][x_space]);
+            found_solution = true;
+            return new_array_path;
+        }
+        up_heuristic += steps;
+        if (up_heuristic <= limit) {
+            new_array_path.push(new_matrix[y_space][x_space]);
+            solution_path = getSolution(limit, new_array_path, new_matrix, y_space-1, x_space);
+            if (solution_path) {
+                console.log(3, solution_path);
+                return solution_path;
+            }
+        }
+    }
+    if (y_space < y_size-1) {
+        var new_matrix = cloneMatrix(matrix);
+        var new_array_path = array_path.slice(0);
+        new_matrix[y_space][x_space] = matrix[y_space+1][x_space];
+        new_matrix[y_space+1][x_space] = 0;
+        var down_heuristic = steps + getHeuristic(new_matrix);
+        if (down_heuristic == 0) {
+            new_array_path.push(new_matrix[y_space][x_space]);
+            found_solution = true;
+            return new_array_path;
+        }
+        down_heuristic += steps;
+        if (down_heuristic <= limit) {
+            new_array_path.push(new_matrix[y_space][x_space]);
+            solution_path = getSolution(limit, new_array_path, new_matrix, y_space+1, x_space);
+            if (solution_path) {
+                console.log(4, solution_path);
+                return solution_path;
+            }
+        }
+    }
+    console.log("end", array_path);
+    console.log("end_new_array_path", new_array_path);
+    /*if (found_solution) {
+        return array_path;
     } else {
-        var b_length = bad_list.length;
-        the_best = bad_list[0];
-        if (b_length > 1) {
-            for (var i = 1; i < b_length; i++) {
-                //console.log("bad", the_best[i].value, window.last_moved_value);
-                if (bad_list[i][0] < the_best[0] && the_best[i].value != window.last_moved_value) {
-                    the_best = bad_list[i];
-                }
-            }
-        }
-    }
-
-    console.log(the_best[1].value, window.last_moved_value);
-    if (the_best[1]) {
-        moveTile(the_best[1], window.space);
-    }
-    console.log(the_best);
-
-    console.log(good_list);
-    console.log(bad_list);*/
+        limit++;
+        return getSolution(limit, [], matrix, y_space, x_space);
+        /*var solution = getSolution(limit, [], matrix, y_space, x_space);
+        if (solution) {
+            found_solution = true;
+            return solution;
+        }*/
+    //}
 }
 
 function getHeuristic(matrix) {
@@ -344,12 +380,12 @@ function getHeuristic(matrix) {
                 }
             }
 
-            if ((value == right_matrix[y_size-2][x_size-1] && y != y_size-1)
+            /*if ((value == right_matrix[y_size-2][x_size-1] && y != y_size-1)
                 ||
-                value == right_matrix[y_size-1][x_size-2] && x != x_size-1){
+                (value == right_matrix[y_size-1][x_size-2] && x != x_size-1)) {
                 last_move++;
                 //console.log("last_move: ", value);
-            }
+            }*/
         }
     }
     if (matrix[0][1] == right_matrix[0][1] &&
@@ -377,10 +413,10 @@ function getHeuristic(matrix) {
     //console.log("linear_conflict: ", linear_conflict);
     //console.log("corner_conflict: ", corner_conflict);
     var heuristic = manhattan_distance + linear_conflict + corner_conflict;
-    if (last_move == 2) {
+    /*if (heuristic > 0 && last_move == 2) {
         //console.log("last_move: ", last_move);
         heuristic += 2;
-    }
+    }*/
     //console.log("heuristic: ", heuristic);
     return heuristic;
 }

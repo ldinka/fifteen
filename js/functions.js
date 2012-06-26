@@ -50,8 +50,8 @@ function newGame() {
         for (var y = 0; y < y_size; y++) {
             tile_matrix[y] =  tile_array.slice(y * x_size, (y + 1) * x_size);
         }
-        tile_matrix = [[1, 2, 3, 4], [5, 6, 0, 7], [9, 10, 12, 8], [13, 14, 11, 15]];
-        tile_array  = [ 1, 2, 3, 4,   5, 6, 0, 7,   9, 10, 12, 8,   13, 14, 11, 15];
+        //tile_matrix = [[1, 2, 3, 4], [5, 6, 0, 7], [9, 10, 12, 8], [13, 14, 11, 15]];
+        //tile_array  = [ 1, 2, 3, 4,   5, 6, 0, 7,   9, 10, 12, 8,   13, 14, 11, 15];
         var tiles = [];
         var coords_matrix = [];
         for (var y = 0, k = 0; y < y_size; y++) {
@@ -167,7 +167,13 @@ function checkSolution(tile_array) {
 function findSolution() {
     var x_space = window.space.x;
     var y_space = window.space.y;
-    var array_path = getSolution(getHeuristic(tile_matrix), [], cloneMatrix(tile_matrix), y_space, x_space, false);
+    var limit = getHeuristic(tile_matrix);
+    var array_path;
+    do {
+        array_path = getSolution(limit, [], cloneMatrix(tile_matrix), y_space, x_space);
+        limit++;
+    }
+    while (!array_path);
     console.log(array_path);
     /*var x_space = window.space.x;
     var y_space = window.space.y;
@@ -233,14 +239,14 @@ function findSolution() {
     }*/
 }
 
-//var found_solution = false;
-
 function getSolution(limit, array_path, matrix, y_space, x_space) {
-    if (++counter_steps > 50000) {
+    if (++counter_steps > 10000000) {
         return array_path;
     }
 
     var steps = array_path.length;
+    var best_heuristic;
+    var best_coords;
     if (x_space > 0) {
         var new_matrix = cloneMatrix(matrix);
         var new_array_path = array_path.slice(0);
@@ -249,16 +255,17 @@ function getSolution(limit, array_path, matrix, y_space, x_space) {
         var left_heuristic = getHeuristic(new_matrix);
         if (left_heuristic == 0) {
             new_array_path.push(new_matrix[y_space][x_space]);
-            found_solution = true;
             return new_array_path;
         }
         left_heuristic += steps;
         if (left_heuristic <= limit) {
             new_array_path.push(new_matrix[y_space][x_space]);
-            solution_path = getSolution(limit, new_array_path, new_matrix, y_space, x_space-1);
+            var solution_path = getSolution(limit, new_array_path, new_matrix, y_space, x_space-1);
             if (solution_path) {
-                console.log(1, solution_path);
                 return solution_path;
+            } else {
+                new_matrix = [];
+                new_array_path = [];
             }
         }
     }
@@ -270,16 +277,17 @@ function getSolution(limit, array_path, matrix, y_space, x_space) {
         var right_heuristic = getHeuristic(new_matrix);
         if (right_heuristic == 0) {
             new_array_path.push(new_matrix[y_space][x_space]);
-            found_solution = true;
             return new_array_path;
         }
         right_heuristic += steps;
         if (right_heuristic <= limit) {
             new_array_path.push(new_matrix[y_space][x_space]);
-            solution_path = getSolution(limit, new_array_path, new_matrix, y_space, x_space+1);
+            var solution_path = getSolution(limit, new_array_path, new_matrix, y_space, x_space+1);
             if (solution_path) {
-                console.log(2, solution_path);
                 return solution_path;
+            } else {
+                new_matrix = [];
+                new_array_path = [];
             }
         }
     }
@@ -291,16 +299,17 @@ function getSolution(limit, array_path, matrix, y_space, x_space) {
         var up_heuristic = getHeuristic(new_matrix);
         if (up_heuristic == 0) {
             new_array_path.push(new_matrix[y_space][x_space]);
-            found_solution = true;
             return new_array_path;
         }
         up_heuristic += steps;
         if (up_heuristic <= limit) {
             new_array_path.push(new_matrix[y_space][x_space]);
-            solution_path = getSolution(limit, new_array_path, new_matrix, y_space-1, x_space);
+            var solution_path = getSolution(limit, new_array_path, new_matrix, y_space-1, x_space);
             if (solution_path) {
-                console.log(3, solution_path);
                 return solution_path;
+            } else {
+                new_matrix = [];
+                new_array_path = [];
             }
         }
     }
@@ -312,32 +321,20 @@ function getSolution(limit, array_path, matrix, y_space, x_space) {
         var down_heuristic = steps + getHeuristic(new_matrix);
         if (down_heuristic == 0) {
             new_array_path.push(new_matrix[y_space][x_space]);
-            found_solution = true;
             return new_array_path;
         }
         down_heuristic += steps;
         if (down_heuristic <= limit) {
             new_array_path.push(new_matrix[y_space][x_space]);
-            solution_path = getSolution(limit, new_array_path, new_matrix, y_space+1, x_space);
+            var solution_path = getSolution(limit, new_array_path, new_matrix, y_space+1, x_space);
             if (solution_path) {
-                console.log(4, solution_path);
                 return solution_path;
+            } else {
+                new_matrix = [];
+                new_array_path = [];
             }
         }
     }
-    console.log("end", array_path);
-    console.log("end_new_array_path", new_array_path);
-    /*if (found_solution) {
-        return array_path;
-    } else {
-        limit++;
-        return getSolution(limit, [], matrix, y_space, x_space);
-        /*var solution = getSolution(limit, [], matrix, y_space, x_space);
-        if (solution) {
-            found_solution = true;
-            return solution;
-        }*/
-    //}
 }
 
 function getHeuristic(matrix) {

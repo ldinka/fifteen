@@ -1,5 +1,8 @@
 var wait_minutes = 10; // Время ожидания, минуты
 
+//var user_matrix = [[1, 2, 3, 4], [5, 6, 0, 7], [9, 10, 12, 8], [13, 14, 11, 15]]; // имеет решение
+//var user_matrix = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 15, 14, 0]]; // не имеет решение
+
 var x_size = 4;
 var y_size = 4;
 var tile_matrix  = [];
@@ -9,7 +12,7 @@ var counter_steps = 0;
 
 function Init() {
     document.getElementById("new_game").onclick = function(){
-        newGame();
+        newGame("click");
         step_counter = 0;
         document.getElementById("step_counter").innerHTML = step_counter;
     };
@@ -39,23 +42,42 @@ function Init() {
     }
     window.right_columns = right_columns;
 
-    newGame();
+    newGame("init");
 }
 
-function newGame() {
+function newGame(act) {
     document.getElementById("found_solution").innerHTML = "";
     document.getElementById("play_solution").style.display = "none";
     var right_array = window.right_array;
-    var tile_array = right_array.slice(0);
-    shuffle(tile_array);
-    if (checkSolution(tile_array) == 0) {
-        newGame(); // если нет решения
-    } else {
+    var user_matrix = window.user_matrix || false;
+
+    if (user_matrix && act == "init") {
+        var tile_array = [];
         for (var y = 0; y < y_size; y++) {
-            tile_matrix[y] =  tile_array.slice(y * x_size, (y + 1) * x_size);
+            for (var x = 0; x < x_size; x++) {
+                tile_array.push(user_matrix[y][x]);
+            }
         }
-        //tile_matrix = [[1, 2, 3, 4], [5, 6, 0, 7], [9, 10, 12, 8], [13, 14, 11, 15]];
-        //tile_array  = [ 1, 2, 3, 4,   5, 6, 0, 7,   9, 10, 12, 8,   13, 14, 11, 15];
+    } else {
+        var tile_array = right_array.slice(0);
+        shuffle(tile_array);
+    }
+
+    window.tile_array = tile_array;
+    var check_solution = checkSolution(tile_array);
+    if (check_solution == 0 && user_matrix && act == "init") {
+        alert("Матрица не имеет решения");
+    }
+    if (check_solution == 0 && (!user_matrix || act == "click")) {
+            newGame(); // если нет решения
+    } else {
+        if (user_matrix && act == "init") {
+            tile_matrix = user_matrix;
+        } else {
+            for (var y = 0; y < y_size; y++) {
+                tile_matrix[y] =  tile_array.slice(y * x_size, (y + 1) * x_size);
+            }
+        }
         var tiles = [];
         var coords_matrix = [];
         var tile_value_matrix = [];
@@ -171,33 +193,37 @@ function checkSolution(tile_array) {
 }
 
 function findSolution() {
-    document.getElementById("please_wait").style.display = "block"
-    setTimeout(function(){
-        var x_space = window.space.x;
-        var y_space = window.space.y;
-        var limit = getHeuristic(tile_matrix);
-        var array_path;
-        var time_start = new Date().valueOf() * 0.001;
-        var gone_time = 0;
-        do {
-            array_path = getSolution(limit, [], cloneMatrix(tile_matrix), y_space, x_space);
-            limit++;
-            gone_time = new Date().valueOf() * 0.001 - time_start;
-            console.log("limit: ", limit, ", time: ", gone_time);
-        }
-        while (!array_path && gone_time < wait_minutes * 60);
-        console.log(array_path);
-        console.log(new Date().valueOf() * 0.001 - time_start);
-        document.getElementById("please_wait").style.display = "none"
-        if (array_path) {
-            document.getElementById("found_solution").innerHTML = "Решение: " + array_path.toString() + " (" + array_path.length + " ходов)";
-            var play_solution = document.getElementById("play_solution");
-            play_solution.style.display = "inline-block"
-            play_solution.onclick = function(){playSolution(array_path)};
-        } else {
-            document.getElementById("found_solution").innerHTML = "Слишком сложная комбинация";
-        }
-    }, 10);
+    if (checkSolution(window.tile_array)) {
+        document.getElementById("please_wait").style.display = "block"
+        setTimeout(function(){
+            var x_space = window.space.x;
+            var y_space = window.space.y;
+            var limit = getHeuristic(tile_matrix);
+            var array_path;
+            var time_start = new Date().valueOf() * 0.001;
+            var gone_time = 0;
+            do {
+                array_path = getSolution(limit, [], cloneMatrix(tile_matrix), y_space, x_space);
+                limit++;
+                gone_time = new Date().valueOf() * 0.001 - time_start;
+                console.log("limit: ", limit, ", time: ", gone_time);
+            }
+            while (!array_path && gone_time < wait_minutes * 60);
+            console.log(array_path);
+            console.log(new Date().valueOf() * 0.001 - time_start);
+            document.getElementById("please_wait").style.display = "none"
+            if (array_path) {
+                document.getElementById("found_solution").innerHTML = "Решение: " + array_path.toString() + " (" + array_path.length + " ходов)";
+                var play_solution = document.getElementById("play_solution");
+                play_solution.style.display = "inline-block"
+                play_solution.onclick = function(){playSolution(array_path)};
+            } else {
+                document.getElementById("found_solution").innerHTML = "Слишком сложная комбинация";
+            }
+        }, 10);
+    } else {
+        alert("Игра не имеет решения");
+    }
 }
 
 function getSolution(limit, array_path, matrix, y_space, x_space) {

@@ -1,3 +1,5 @@
+var wait_minutes = 10; // Время ожидания, минуты
+
 var x_size = 4;
 var y_size = 4;
 var tile_matrix  = [];
@@ -42,6 +44,7 @@ function Init() {
 
 function newGame() {
     document.getElementById("found_solution").innerHTML = "";
+    document.getElementById("play_solution").style.display = "none";
     var right_array = window.right_array;
     var tile_array = right_array.slice(0);
     shuffle(tile_array);
@@ -175,12 +178,14 @@ function findSolution() {
         var limit = getHeuristic(tile_matrix);
         var array_path;
         var time_start = new Date().valueOf() * 0.001;
+        var gone_time = 0;
         do {
             array_path = getSolution(limit, [], cloneMatrix(tile_matrix), y_space, x_space);
             limit++;
-            console.log("limit: ", limit, ", time: ", new Date().valueOf() * 0.001 - time_start);
+            gone_time = new Date().valueOf() * 0.001 - time_start;
+            console.log("limit: ", limit, ", time: ", gone_time);
         }
-        while (!array_path && limit <= 60);
+        while (!array_path && gone_time < wait_minutes * 60);
         console.log(array_path);
         console.log(new Date().valueOf() * 0.001 - time_start);
         document.getElementById("please_wait").style.display = "none"
@@ -378,6 +383,7 @@ function cloneMatrix(matrix) {
 }
 
 function playSolution(solution_path) {
+    document.getElementById("play_solution").style.display = "none";
     var solution_length = solution_path.length;
     var i = 0;
     var play_solution = window.setInterval(function(){

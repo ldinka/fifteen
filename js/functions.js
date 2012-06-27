@@ -41,6 +41,7 @@ function Init() {
 }
 
 function newGame() {
+    document.getElementById("found_solution").innerHTML = "";
     var right_array = window.right_array;
     var tile_array = right_array.slice(0);
     shuffle(tile_array);
@@ -54,6 +55,7 @@ function newGame() {
         //tile_array  = [ 1, 2, 3, 4,   5, 6, 0, 7,   9, 10, 12, 8,   13, 14, 11, 15];
         var tiles = [];
         var coords_matrix = [];
+        var tile_value_matrix = [];
         for (var y = 0, k = 0; y < y_size; y++) {
             tiles[y] = [];
             for (var x = 0; x < x_size; x++, k++) {
@@ -63,6 +65,7 @@ function newGame() {
                     coords_matrix[k + 1] = [y, x];
                 }
                 var value = tile_array[k];
+                tile_value_matrix[value] = [y, x];
                 var tile = document.getElementById("position_" + (k + 1));
                 tile.x = x;
                 tile.y = y;
@@ -81,6 +84,7 @@ function newGame() {
         }
         window.tiles = tiles;
         window.coords_matrix = coords_matrix;
+        window.tile_value_matrix = tile_value_matrix;
     }
 }
 
@@ -118,14 +122,13 @@ function moveTile(tile, space) {
     stepCounter();
     window.last_moved_value = value;
     if (tile_matrix.toString() == window.right_matrix.toString()) {
-        alert("Победа!");
+        setTimeout(function(){alert("Победа!")}, 750);
     }
 }
 
-function shuffle(arr)
-{
+function shuffle(arr) {
     var rand_var, temp_var, arr_length = arr.length;
-    for (i = 0; i < arr_length; i++) {
+    for (var i = 0; i < arr_length; i++) {
         rand_var = parseInt(Math.random() * i);
         temp_var = arr[i];
         arr[i] = arr[rand_var];
@@ -165,88 +168,36 @@ function checkSolution(tile_array) {
 }
 
 function findSolution() {
-    var x_space = window.space.x;
-    var y_space = window.space.y;
-    var limit = getHeuristic(tile_matrix);
-    var array_path;
-    do {
-        array_path = getSolution(limit, [], cloneMatrix(tile_matrix), y_space, x_space);
-        limit++;
-    }
-    while (!array_path);
-    console.log(array_path);
-    /*var x_space = window.space.x;
-    var y_space = window.space.y;
-
-    var current_heuristic = getHeuristic(tile_matrix);
-    var best_heuristic = current_heuristic;
-    var best_tile;
-
-    console.log("tile_matrix", tile_matrix);
-    console.log("current_heuristic", current_heuristic);
-
-    if (x_space > 0) {
-        console.log("left", tile_matrix[y_space][x_space-1]);
-        var new_matrix = cloneMatrix(tile_matrix);
-        new_matrix[y_space][x_space] = tile_matrix[y_space][x_space-1];
-        new_matrix[y_space][x_space-1] = 0;
-        console.log("left_matrix", new_matrix);
-        var left_heuristic = getHeuristic(new_matrix);
-        console.log("left_heuristic", left_heuristic);
-        if (left_heuristic <= best_heuristic) {
-            best_heuristic = left_heuristic;
-            best_tile = window.tiles[y_space][x_space-1];
+    document.getElementById("please_wait").style.display = "block"
+    setTimeout(function(){
+        var x_space = window.space.x;
+        var y_space = window.space.y;
+        var limit = getHeuristic(tile_matrix);
+        var array_path;
+        var time_start = new Date().valueOf() * 0.001;
+        do {
+            array_path = getSolution(limit, [], cloneMatrix(tile_matrix), y_space, x_space);
+            limit++;
+            console.log("limit: ", limit, ", time: ", new Date().valueOf() * 0.001 - time_start);
         }
-    }
-    if (x_space < x_size-1) {
-        console.log("right", tile_matrix[y_space][x_space+1]);
-        var new_matrix = cloneMatrix(tile_matrix);
-        new_matrix[y_space][x_space] = tile_matrix[y_space][x_space+1];
-        new_matrix[y_space][x_space+1] = 0;
-        console.log("right_matrix", new_matrix);
-        var right_heuristic = getHeuristic(new_matrix);
-        console.log("right_heuristic", right_heuristic);
-        if (right_heuristic <= best_heuristic) {
-            best_heuristic = right_heuristic;
-            best_tile = window.tiles[y_space][x_space+1];
+        while (!array_path && limit <= 60);
+        console.log(array_path);
+        console.log(new Date().valueOf() * 0.001 - time_start);
+        document.getElementById("please_wait").style.display = "none"
+        if (array_path) {
+            document.getElementById("found_solution").innerHTML = "Решение: " + array_path.toString() + " (" + array_path.length + " ходов)";
+            var play_solution = document.getElementById("play_solution");
+            play_solution.style.display = "inline-block"
+            play_solution.onclick = function(){playSolution(array_path)};
+        } else {
+            document.getElementById("found_solution").innerHTML = "Слишком сложная комбинация";
         }
-    }
-    if (y_space > 0) {
-        console.log("up", tile_matrix[y_space-1][x_space]);
-        var new_matrix = cloneMatrix(tile_matrix);
-        new_matrix[y_space][x_space] = tile_matrix[y_space-1][x_space];
-        new_matrix[y_space-1][x_space] = 0;
-        console.log("up_matrix", new_matrix);
-        var up_heuristic = getHeuristic(new_matrix);
-        console.log("up_heuristic", up_heuristic);
-        if (up_heuristic <= best_heuristic) {
-            best_heuristic = up_heuristic;
-            best_tile = window.tiles[y_space-1][x_space];
-        }
-    }
-    if (y_space < y_size-1) {
-        console.log("down", tile_matrix[y_space+1][x_space]);
-        var new_matrix = cloneMatrix(tile_matrix);
-        new_matrix[y_space][x_space] = tile_matrix[y_space+1][x_space];
-        new_matrix[y_space+1][x_space] = 0;
-        console.log("down_matrix", new_matrix);
-        var down_heuristic = getHeuristic(new_matrix);
-        console.log("down_heuristic", down_heuristic);
-        if (down_heuristic <= best_heuristic) {
-            best_heuristic = down_heuristic;
-            best_tile = window.tiles[y_space+1][x_space];
-        }
-    }*/
+    }, 10);
 }
 
 function getSolution(limit, array_path, matrix, y_space, x_space) {
-    if (++counter_steps > 10000000) {
-        return array_path;
-    }
-
     var steps = array_path.length;
-    var best_heuristic;
-    var best_coords;
+    var last_value;
     if (x_space > 0) {
         var new_matrix = cloneMatrix(matrix);
         var new_array_path = array_path.slice(0);
@@ -258,16 +209,16 @@ function getSolution(limit, array_path, matrix, y_space, x_space) {
             return new_array_path;
         }
         left_heuristic += steps;
-        if (left_heuristic <= limit) {
+        if (left_heuristic <= limit && new_matrix[y_space][x_space] != new_array_path[steps-1]) {
             new_array_path.push(new_matrix[y_space][x_space]);
+            last_value = new_matrix[y_space][x_space];
             var solution_path = getSolution(limit, new_array_path, new_matrix, y_space, x_space-1);
             if (solution_path) {
                 return solution_path;
-            } else {
-                new_matrix = [];
-                new_array_path = [];
             }
         }
+        new_matrix = [];
+        new_array_path = [];
     }
     if (x_space < x_size-1) {
         var new_matrix = cloneMatrix(matrix);
@@ -280,16 +231,16 @@ function getSolution(limit, array_path, matrix, y_space, x_space) {
             return new_array_path;
         }
         right_heuristic += steps;
-        if (right_heuristic <= limit) {
+        if (right_heuristic <= limit && new_matrix[y_space][x_space] != new_array_path[steps-1]) {
             new_array_path.push(new_matrix[y_space][x_space]);
+            last_value = new_matrix[y_space][x_space];
             var solution_path = getSolution(limit, new_array_path, new_matrix, y_space, x_space+1);
             if (solution_path) {
                 return solution_path;
-            } else {
-                new_matrix = [];
-                new_array_path = [];
             }
         }
+        new_matrix = [];
+        new_array_path = [];
     }
     if (y_space > 0) {
         var new_matrix = cloneMatrix(matrix);
@@ -302,38 +253,38 @@ function getSolution(limit, array_path, matrix, y_space, x_space) {
             return new_array_path;
         }
         up_heuristic += steps;
-        if (up_heuristic <= limit) {
+        if (up_heuristic <= limit && new_matrix[y_space][x_space] != new_array_path[steps-1]) {
             new_array_path.push(new_matrix[y_space][x_space]);
+            last_value = new_matrix[y_space][x_space];
             var solution_path = getSolution(limit, new_array_path, new_matrix, y_space-1, x_space);
             if (solution_path) {
                 return solution_path;
-            } else {
-                new_matrix = [];
-                new_array_path = [];
             }
         }
+        new_matrix = [];
+        new_array_path = [];
     }
     if (y_space < y_size-1) {
         var new_matrix = cloneMatrix(matrix);
         var new_array_path = array_path.slice(0);
         new_matrix[y_space][x_space] = matrix[y_space+1][x_space];
         new_matrix[y_space+1][x_space] = 0;
-        var down_heuristic = steps + getHeuristic(new_matrix);
+        var down_heuristic = getHeuristic(new_matrix);
         if (down_heuristic == 0) {
             new_array_path.push(new_matrix[y_space][x_space]);
             return new_array_path;
         }
         down_heuristic += steps;
-        if (down_heuristic <= limit) {
+        if (down_heuristic <= limit && new_matrix[y_space][x_space] != new_array_path[steps-1]) {
             new_array_path.push(new_matrix[y_space][x_space]);
+            last_value = new_matrix[y_space][x_space];
             var solution_path = getSolution(limit, new_array_path, new_matrix, y_space+1, x_space);
             if (solution_path) {
                 return solution_path;
-            } else {
-                new_matrix = [];
-                new_array_path = [];
             }
         }
+        new_matrix = [];
+        new_array_path = [];
     }
 }
 
@@ -344,45 +295,37 @@ function getHeuristic(matrix) {
     var linear_conflict = 0;
     var linear_conflicts = [];
     var corner_conflict = 0;
-    var last_move = 0;
     for (var y = 0; y < y_size; y++) {
         for (var x = 0; x < y_size; x++) {
             var value = matrix[y][x];
-            var y_home = coords_matrix[value][0];
-            var x_home = coords_matrix[value][1];
-            manhattan_distance += Math.abs(x_home - x) + Math.abs(y_home - y);
+            if (value > 0) {
+                var y_home = coords_matrix[value][0];
+                var x_home = coords_matrix[value][1];
+                manhattan_distance += Math.abs(x_home - x) + Math.abs(y_home - y);
 
-            if (x >= y && value > 1) {
-                if (y == y_home) {
-                    var right_row = right_matrix[y_home];
-                    for (var z = x; z < x_size; z++) {
-                        var conflict_value = matrix[y_home][z];
-                        if (conflict_value != 0 && conflict_value < value && inArray(conflict_value, right_row)) {
-                            //console.log("conflict: ", value, conflict_value);
-                            linear_conflict += 2;
-                            linear_conflicts.push(conflict_value, value);
+                if (x >= y && value > 1) {
+                    if (y == y_home) {
+                        var right_row = right_matrix[y_home];
+                        for (var z = x; z < x_size; z++) {
+                            var conflict_value = matrix[y_home][z];
+                            if (conflict_value != 0 && conflict_value < value && inArray(conflict_value, right_row)) {
+                                linear_conflict += 2;
+                                linear_conflicts.push(conflict_value, value);
+                            }
                         }
                     }
-                }
-                if (x == x_home) {
-                    var right_column = right_columns[x_home];
-                    for (var z = y; z < y_size; z++) {
-                        var conflict_value = matrix[z][x_home];
-                        if (conflict_value != 0 && conflict_value < value && inArray(conflict_value, right_column)) {
-                            //console.log("conflict: ", value, conflict_value);
-                            linear_conflict += 2;
-                            linear_conflicts.push(conflict_value, value);
+                    if (x == x_home) {
+                        var right_column = right_columns[x_home];
+                        for (var z = y; z < y_size; z++) {
+                            var conflict_value = matrix[z][x_home];
+                            if (conflict_value != 0 && conflict_value < value && inArray(conflict_value, right_column)) {
+                                linear_conflict += 2;
+                                linear_conflicts.push(conflict_value, value);
+                            }
                         }
                     }
                 }
             }
-
-            /*if ((value == right_matrix[y_size-2][x_size-1] && y != y_size-1)
-                ||
-                (value == right_matrix[y_size-1][x_size-2] && x != x_size-1)) {
-                last_move++;
-                //console.log("last_move: ", value);
-            }*/
         }
     }
     if (matrix[0][1] == right_matrix[0][1] &&
@@ -406,15 +349,14 @@ function getHeuristic(matrix) {
         !inArray(matrix[y_size-1][1], linear_conflicts)) {
         corner_conflict += 2;
     }
-    //console.log("manhattan_distance: ", manhattan_distance);
-    //console.log("linear_conflict: ", linear_conflict);
-    //console.log("corner_conflict: ", corner_conflict);
+    if (matrix[y_size-2][x_size-1] == right_matrix[y_size-2][x_size-1] &&
+        matrix[y_size-1][x_size-2] == right_matrix[y_size-1][x_size-2] &&
+        matrix[y_size-1][x_size-1] != right_matrix[y_size-1][x_size-1] &&
+        !inArray(matrix[y_size-2][0], linear_conflicts) &&
+        !inArray(matrix[y_size-1][1], linear_conflicts)) {
+        corner_conflict += 2;
+    }
     var heuristic = manhattan_distance + linear_conflict + corner_conflict;
-    /*if (heuristic > 0 && last_move == 2) {
-        //console.log("last_move: ", last_move);
-        heuristic += 2;
-    }*/
-    //console.log("heuristic: ", heuristic);
     return heuristic;
 }
 
@@ -434,6 +376,33 @@ function cloneMatrix(matrix) {
     }
     return new_matrix;
 }
+
+function playSolution(solution_path) {
+    var solution_length = solution_path.length;
+    var i = 0;
+    var play_solution = window.setInterval(function(){
+        if (i < solution_path.length) {
+            playIteration(solution_path, i);
+            i++;
+        } else {
+            window.clearInterval(play_solution);
+        };
+    }, 750);
+}
+
+function playIteration(solution_path, i){
+    var value = solution_path[i];
+    var tile_y = tile_value_matrix[value][0];
+    var tile_x = tile_value_matrix[value][1];
+    var space_y = tile_value_matrix[0][0];
+    var space_x = tile_value_matrix[0][1];
+    moveTile(window.tiles[tile_y][tile_x], window.tiles[space_y][space_x]);
+    tile_value_matrix[value] = [space_y, space_x];
+    tile_value_matrix[0] = [tile_y, tile_x];
+}
+
+
+
 
 
 

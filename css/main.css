@@ -50,6 +50,16 @@ button {
 #new_game:hover {
     background: #2C86B0;
 }
+#play_solution {
+    background: #68168F;
+    color: #fff;
+}
+#play_solution:hover {
+    background: #912EC0;
+}
+#please_wait, #play_solution {
+    display: none;
+}
 
 #position_1 {
     left: 0;
